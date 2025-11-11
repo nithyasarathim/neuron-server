@@ -1,0 +1,11 @@
+nltk
+fastapi
+sentence-transformers
+python-multipart
+spacy
+uvicorn[standard]
+PyPDF2
+numpy
+scikit-learn
+
+# python -m spacy download en_core_web_sm
