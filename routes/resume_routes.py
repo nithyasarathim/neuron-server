@@ -1,15 +1,45 @@
+# routes/resume_routes.py
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 import uuid
 from io import BytesIO
 import os
 from models.meta import load_meta, save_meta
-from services.text_processing import extract_text_from_pdf_bytes, preprocess_text
-from services.embedding import encode_text
 from config import RESUME_META
 
+# === LAZY LOAD SERVICES ONLY WHEN NEEDED ===
+_text_extractor = None
+_preprocessor = None
+_encoder = None
+
+def get_text_extractor():
+    global _text_extractor
+    if _text_extractor is None:
+        print("Loading text extractor (spaCy + pdfminer)...")
+        from services.text_processing import extract_text_from_pdf_bytes
+        _text_extractor = extract_text_from_pdf_bytes
+    return _text_extractor
+
+def get_preprocessor():
+    global _preprocessor
+    if _preprocessor is None:
+        print("Loading text preprocessor (spaCy)...")
+        from services.text_processing import preprocess_text
+        _preprocessor = preprocess_text
+    return _preprocessor
+
+def get_encoder():
+    global _encoder
+    if _encoder is None:
+        print("Loading embedding encoder...")
+        from services.embedding import encode_text
+        _encoder = encode_text
+    return _encoder
+
+# === DIRECTORY SETUP ===
 RESUMES_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "resumes")
 RESUMES_DIR = os.path.abspath(RESUMES_DIR)
+os.makedirs(RESUMES_DIR, exist_ok=True)  # Ensure dir exists
 
 router = APIRouter()
 
@@ -44,9 +74,14 @@ async def upload_resume(
     with open(path, "wb") as f:
         f.write(content)
 
-    text = extract_text_from_pdf_bytes(BytesIO(content))
-    processed = preprocess_text(text)
-    embedding = encode_text(processed)
+    # === LAZY LOAD ONLY NOW ===
+    extract_text = get_text_extractor()
+    preprocess = get_preprocessor()
+    encode = get_encoder()
+
+    text = extract_text(BytesIO(content))
+    processed = preprocess(text)
+    embedding = encode(processed)
 
     meta[resume_id] = {
         "id": resume_id,
