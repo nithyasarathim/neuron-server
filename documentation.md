@@ -104,7 +104,7 @@ Submits a job description (text), computes embedding, and saves metadata.
 
 ---
 
-### 3. Match Candidates to Job  
+### 3. Match Candidates to Job Availability
 **`GET /match/candidates`**
 
 Returns top matching **resumes** for a given **job ID**, ranked by semantic similarity.
