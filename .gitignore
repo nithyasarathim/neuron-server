@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 *.pyc
 
+data/
 venv/
 env/
 .venv/
